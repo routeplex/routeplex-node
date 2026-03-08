@@ -1,7 +1,7 @@
 {
-  "name": "routeplex",
+  "name": "@routeplex/node",
   "version": "0.0.1",
-  "description": "RoutePlex SDK - Multi-model AI gateway. Route requests across OpenAI, Anthropic, and Google Gemini through a unified API.",
+  "description": "Official RoutePlex Node.js SDK - Multi-model AI gateway. Route requests across OpenAI, Anthropic, and Google Gemini through a unified API.",
   "main": "index.js",
   "types": "index.d.ts",
   "keywords": [
@@ -15,7 +15,8 @@
     "multi-model",
     "chatgpt",
     "claude",
-    "api"
+    "api",
+    "routeplex"
   ],
   "author": "RoutePlex <pashupathi@routeplex.com>",
   "license": "MIT",
@@ -26,5 +27,8 @@
   },
   "bugs": {
     "url": "https://github.com/routeplex/routeplex-node/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

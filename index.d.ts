@@ -1,7 +1,7 @@
 /**
- * RoutePlex SDK - Coming Soon.
+ * @routeplex/node - Coming Soon.
  *
- * The official TypeScript SDK for RoutePlex, the multi-model AI gateway.
+ * The official Node.js SDK for RoutePlex, the multi-model AI gateway.
  * Learn more at https://routeplex.com
  */
 

@@ -1,15 +1,15 @@
-# RoutePlex
+# @routeplex/node
 
-> This is a convenience package. The official SDK lives at [`@routeplex/sdk`](https://www.npmjs.com/package/@routeplex/sdk).
+> **Coming Soon** - The official Node.js SDK for [RoutePlex](https://routeplex.com), the multi-model AI gateway.
 
 ## Install
 
 ```bash
-# Recommended — use the scoped package:
-npm install @routeplex/sdk
-
-# Or this convenience alias:
-npm install routeplex
+npm install @routeplex/node
+# or
+pnpm add @routeplex/node
+# or
+yarn add @routeplex/node
 ```
 
 ## What is RoutePlex?
@@ -19,14 +19,31 @@ RoutePlex is a unified API gateway that intelligently routes your AI requests ac
 ## Coming Soon
 
 ```typescript
-import { RoutePlex } from "@routeplex/sdk";
+import { RoutePlex } from "@routeplex/node";
 
 const client = new RoutePlex({ apiKey: "rp_..." });
 
-const response = await client.chat("Explain quantum computing", {
+// Auto-route to the best model
+const response = await client.chat("Explain quantum computing");
+
+// Or pick a strategy
+const response = await client.chat("Write a sorting algorithm", {
   strategy: "quality", // cost | balanced | quality | speed
 });
+
+console.log(response.output);
+console.log(`Model: ${response.modelUsed}`);
+console.log(`Cost: $${response.usage.costUsd.toFixed(6)}`);
 ```
+
+## Features (Planned)
+
+- **Unified API** - One SDK for OpenAI, Anthropic, and Gemini
+- **Smart Routing** - Auto-select the best model based on your strategy
+- **Cost Tracking** - Real-time cost estimation and tracking
+- **Content Moderation** - Built-in 3-layer moderation pipeline
+- **TypeScript First** - Full type definitions and autocompletion
+- **OpenAI Compatible** - Drop-in replacement with `baseURL` swap
 
 ## Current Integration
 
@@ -46,12 +63,18 @@ const response = await client.chat.completions.create({
 });
 ```
 
+## Ecosystem
+
+| Package | Platform | Description |
+|---------|----------|-------------|
+| [`@routeplex/node`](https://www.npmjs.com/package/@routeplex/node) | npm | Node.js / TypeScript SDK |
+| [`routeplex`](https://pypi.org/project/routeplex/) | PyPI | Python SDK |
+
 ## Links
 
 - [Website](https://routeplex.com)
 - [Documentation](https://routeplex.com/docs)
 - [GitHub](https://github.com/routeplex/routeplex-node)
-- [Python SDK](https://pypi.org/project/routeplex/)
 
 ## License
 

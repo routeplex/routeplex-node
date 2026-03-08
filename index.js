@@ -1,7 +1,7 @@
 /**
- * RoutePlex SDK - Coming Soon.
+ * @routeplex/node - Coming Soon.
  *
- * The official JavaScript/TypeScript SDK for RoutePlex,
+ * The official Node.js SDK for RoutePlex,
  * the multi-model AI gateway.
  *
  * While the SDK is in development, you can use RoutePlex
@@ -22,7 +22,7 @@
 class RoutePlex {
   constructor() {
     throw new Error(
-      "The RoutePlex SDK is coming soon.\n\n" +
+      "The @routeplex/node SDK is coming soon.\n\n" +
       "In the meantime, you can use the OpenAI SDK with RoutePlex:\n\n" +
       '  import OpenAI from "openai";\n' +
       '  const client = new OpenAI({ apiKey: "rp_...", baseURL: "https://api.routeplex.com/v1" });\n\n' +

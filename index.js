@@ -123,6 +123,7 @@ class RoutePlex {
    * @param {number} [options.maxOutputTokens=512] - Max output tokens (1-4096).
    * @param {number} [options.temperature] - Sampling temperature (0-2).
    * @param {boolean} [options.enhancePrompt=false] - Auto-enhance the prompt.
+   * @param {boolean} [options.testMode=false] - Force default (non-premium) models only.
    * @returns {Promise<Object>} ChatResponse with .output, .usage, etc.
    */
   async chat(messages, options = {}) {
@@ -133,12 +134,14 @@ class RoutePlex {
       maxOutputTokens = 512,
       temperature,
       enhancePrompt = false,
+      testMode = false,
     } = options;
 
     const body = {
       messages: msgs,
       max_output_tokens: maxOutputTokens,
       enhance_prompt: enhancePrompt,
+      test_mode: testMode,
     };
 
     if (model) {

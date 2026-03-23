@@ -19,22 +19,21 @@ import { RoutePlex } from "@routeplex/node";
 
 const client = new RoutePlex({ apiKey: "rp_your_api_key" });
 
-// Simple — one-liner
+// Auto-routing — analyzes your prompt, picks the best model
 const response = await client.chat("Explain quantum computing");
 console.log(response.output);
+console.log(`Model: ${response.modelUsed}`);
+console.log(`Cost: $${response.usage.costUsd.toFixed(6)}`);
 
-// With strategy
-const res = await client.chat("Write a sorting algorithm", {
-  strategy: "quality", // cost | balanced | quality | speed
-});
-console.log(`Model: ${res.modelUsed}`);
-console.log(`Cost: $${res.usage.costUsd.toFixed(6)}`);
+// Or override with a strategy
+const res = await client.chat("Write a sorting algorithm", { strategy: "quality" });
 ```
 
 ## Features
 
 - **One-liner chat** — pass a string, get a response
-- **Smart routing** — auto-select the best model with `strategy`
+- **Prompt-based auto-routing** — RoutePlex analyzes your prompt and picks the best model automatically
+- **Strategy routing** — override with `strategy` when you know what you want
 - **Manual mode** — pick a specific model with `model`
 - **Cost estimation** — free, no API key needed
 - **Prompt enhancement** — improve prompts before sending
@@ -42,21 +41,32 @@ console.log(`Cost: $${res.usage.costUsd.toFixed(6)}`);
 - **Typed errors** — `AuthenticationError`, `RateLimitError`, etc.
 - **Zero dependencies** — uses only `fetch` (Node 18+)
 
-## Usage
+## Routing Modes
 
-### Auto-routing (RoutePlex AI)
+RoutePlex supports three ways to route your requests:
+
+### 1. Auto-routing (default) — analyzes your prompt
+
+When you don't specify a model or strategy, RoutePlex **analyzes your prompt** to determine the best model. A simple question gets a fast, cheap model. A complex reasoning task gets a capable one.
 
 ```typescript
-// Let RoutePlex pick the best model
-const res = await client.chat("What is JavaScript?");
-
-// Or specify a strategy
-const fast = await client.chat("Write a haiku", { strategy: "speed" });
-const smart = await client.chat("Analyze this data", { strategy: "quality" });
-const cheap = await client.chat("Summarize this", { strategy: "cost" });
+// RoutePlex reads your prompt and picks the optimal model
+const res = await client.chat("What is JavaScript?");           // → fast, cheap model
+const res2 = await client.chat("Prove the Riemann hypothesis"); // → powerful model
 ```
 
-### Manual model selection
+### 2. Strategy routing — you choose the priority
+
+When you specify a strategy, RoutePlex picks the best model for that priority — regardless of prompt content.
+
+```typescript
+const fast = await client.chat("Write a haiku", { strategy: "speed" });      // fastest
+const smart = await client.chat("Analyze this data", { strategy: "quality" }); // most capable
+const cheap = await client.chat("Summarize this", { strategy: "cost" });      // cheapest
+const balanced = await client.chat("General task", { strategy: "balanced" }); // tradeoff
+```
+
+### 3. Manual mode — you pick the model
 
 ```typescript
 const res = await client.chat("Explain recursion", {

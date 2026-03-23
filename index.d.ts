@@ -27,6 +27,7 @@ export interface ChatOptions {
   maxOutputTokens?: number;
   temperature?: number;
   enhancePrompt?: boolean;
+  testMode?: boolean;
 }
 
 export interface ChatResponse {

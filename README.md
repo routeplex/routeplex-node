@@ -28,6 +28,35 @@ const response = await client.chat("Explain quantum computing");
 console.log(response.output);
 console.log(`Model: ${response.modelUsed}`);
 console.log(`Cost: $${response.usage.costUsd.toFixed(6)}`);
+
+// Or override with a strategy
+const res = await client.chat("Write a sorting algorithm", { strategy: "quality" });
+```
+
+## Features
+
+- **One-liner chat** — pass a string, get a response
+- **Prompt-based auto-routing** — RoutePlex analyzes your prompt and picks the best model automatically
+- **Strategy routing** — override with `strategy` when you know what you want
+- **Manual mode** — pick a specific model with `model`
+- **Cost estimation** — free, no API key needed
+- **Prompt enhancement** — improve prompts before sending
+- **Full TypeScript types** — complete `.d.ts` included
+- **Typed errors** — `AuthenticationError`, `RateLimitError`, etc.
+- **Zero dependencies** — uses only `fetch` (Node 18+)
+
+## Routing Modes
+
+RoutePlex supports three ways to route your requests:
+
+### 1. Auto-routing (default) — analyzes your prompt
+
+When you don't specify a model or strategy, RoutePlex **analyzes your prompt** to determine the best model. A simple question gets a fast, cheap model. A complex reasoning task gets a capable one.
+
+```typescript
+// RoutePlex reads your prompt and picks the optimal model
+const res = await client.chat("What is JavaScript?");           // → fast, cheap model
+const res2 = await client.chat("Prove the Riemann hypothesis"); // → powerful model
 ```
 
 ## Features

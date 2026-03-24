@@ -6,7 +6,7 @@
  *
  * Usage:
  *   const { RoutePlex } = require("@routeplex/node");
- *   const client = new RoutePlex({ apiKey: "rp_your_key" });
+ *   const client = new RoutePlex({ apiKey: "rp_live_YOUR_KEY" });
  *   const res = await client.chat("What is JavaScript?");
  *   console.log(res.output);
  */

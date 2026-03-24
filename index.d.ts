@@ -75,8 +75,8 @@ export interface Model {
   provider: string;
   tier: string;
   contextWindow: number;
-  maxOutput: number;
-  status: string;
+  maxOutputTokens: number;
+  health: string;
   raw: Record<string, any>;
 }
 

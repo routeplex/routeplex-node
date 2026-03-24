@@ -242,8 +242,8 @@ class RoutePlex {
       provider: m.provider || "",
       tier: m.tier || "default",
       contextWindow: m.context_window || 0,
-      maxOutput: m.max_output || 0,
-      status: m.status || "available",
+      maxOutputTokens: m.max_output_tokens || 0,
+      health: m.health || "healthy",
       raw: m,
     }));
   }

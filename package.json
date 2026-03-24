@@ -23,7 +23,7 @@
   ],
   "author": "RoutePlex <pashupathi@routeplex.com>",
   "license": "MIT",
-  "homepage": "https://routeplex.com",
+  "homepage": "https://routeplex.com?utm_source=npm&utm_medium=package&utm_campaign=node-sdk",
   "repository": {
     "type": "git",
     "url": "https://github.com/routeplex/routeplex-node"

@@ -1,6 +1,10 @@
 # @routeplex/node
 
-The official Node.js SDK for [RoutePlex](https://routeplex.com), the multi-model AI gateway.
+[![npm](https://img.shields.io/npm/v/@routeplex/node?label=npm&color=red)](https://www.npmjs.com/package/@routeplex/node)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green)](https://github.com/routeplex/routeplex-node/blob/main/LICENSE)
+[![Node 18+](https://img.shields.io/badge/Node.js-18+-339933)](https://www.npmjs.com/package/@routeplex/node)
+
+The official Node.js SDK for [RoutePlex](https://routeplex.com?utm_source=github&utm_medium=readme&utm_campaign=node-sdk), the multi-model AI gateway. Route requests across OpenAI, Anthropic, and Google through a single API.
 
 ## Install
 
@@ -17,24 +21,23 @@ yarn add @routeplex/node
 ```typescript
 import { RoutePlex } from "@routeplex/node";
 
-const client = new RoutePlex({ apiKey: "rp_your_api_key" });
+const client = new RoutePlex({ apiKey: "rp_live_YOUR_KEY" });
 
-// Simple — one-liner
+// Auto-routing — analyzes your prompt, picks the best model
 const response = await client.chat("Explain quantum computing");
 console.log(response.output);
+console.log(`Model: ${response.modelUsed}`);
+console.log(`Cost: $${response.usage.costUsd.toFixed(6)}`);
 
-// With strategy
-const res = await client.chat("Write a sorting algorithm", {
-  strategy: "quality", // cost | balanced | quality | speed
-});
-console.log(`Model: ${res.modelUsed}`);
-console.log(`Cost: $${res.usage.costUsd.toFixed(6)}`);
+// Or override with a strategy
+const res = await client.chat("Write a sorting algorithm", { strategy: "quality" });
 ```
 
 ## Features
 
 - **One-liner chat** — pass a string, get a response
-- **Smart routing** — auto-select the best model with `strategy`
+- **Prompt-based auto-routing** — RoutePlex analyzes your prompt and picks the best model automatically
+- **Strategy routing** — override with `strategy` when you know what you want
 - **Manual mode** — pick a specific model with `model`
 - **Cost estimation** — free, no API key needed
 - **Prompt enhancement** — improve prompts before sending
@@ -42,21 +45,59 @@ console.log(`Cost: $${res.usage.costUsd.toFixed(6)}`);
 - **Typed errors** — `AuthenticationError`, `RateLimitError`, etc.
 - **Zero dependencies** — uses only `fetch` (Node 18+)
 
-## Usage
+## Routing Modes
 
-### Auto-routing (RoutePlex AI)
+RoutePlex supports three ways to route your requests:
+
+### 1. Auto-routing (default) — analyzes your prompt
+
+When you don't specify a model or strategy, RoutePlex **analyzes your prompt** to determine the best model. A simple question gets a fast, cheap model. A complex reasoning task gets a capable one.
 
 ```typescript
-// Let RoutePlex pick the best model
-const res = await client.chat("What is JavaScript?");
-
-// Or specify a strategy
-const fast = await client.chat("Write a haiku", { strategy: "speed" });
-const smart = await client.chat("Analyze this data", { strategy: "quality" });
-const cheap = await client.chat("Summarize this", { strategy: "cost" });
+// RoutePlex reads your prompt and picks the optimal model
+const res = await client.chat("What is JavaScript?");           // → fast, cheap model
+const res2 = await client.chat("Prove the Riemann hypothesis"); // → powerful model
 ```
 
-### Manual model selection
+## Features
+
+- **One-liner chat** — pass a string, get a response
+- **Prompt-based auto-routing** — RoutePlex analyzes your prompt and picks the best model automatically
+- **Strategy routing** — override with `strategy` when you know what you want
+- **Manual mode** — pick a specific model with `model`
+- **Prompt enhancement** — auto-improve prompts before sending to the model
+- **Test mode** — safe development and CI testing with default-tier models only
+- **Cost estimation** — estimate costs before sending (free, no API key needed)
+- **Full TypeScript types** — complete `.d.ts` included
+- **Typed errors** — `AuthenticationError`, `RateLimitError`, etc.
+- **Zero dependencies** — uses only `fetch` (Node 18+)
+
+## Routing Modes
+
+RoutePlex supports three ways to route your requests:
+
+### 1. Auto-routing (default) — analyzes your prompt
+
+When you don't specify a model or strategy, RoutePlex **analyzes your prompt** to determine the best model. A simple question gets a fast, cheap model. A complex reasoning task gets a capable one.
+
+```typescript
+// RoutePlex reads your prompt and picks the optimal model
+const res = await client.chat("What is JavaScript?");           // → fast, cheap model
+const res2 = await client.chat("Prove the Riemann hypothesis"); // → powerful model
+```
+
+### 2. Strategy routing — you choose the priority
+
+When you specify a strategy, RoutePlex picks the best model for that priority — regardless of prompt content.
+
+```typescript
+const fast = await client.chat("Write a haiku", { strategy: "speed" });      // fastest
+const smart = await client.chat("Analyze this data", { strategy: "quality" }); // most capable
+const cheap = await client.chat("Summarize this", { strategy: "cost" });      // cheapest
+const balanced = await client.chat("General task", { strategy: "balanced" }); // tradeoff
+```
+
+### 3. Manual mode — you pick the model
 
 ```typescript
 const res = await client.chat("Explain recursion", {
@@ -65,6 +106,34 @@ const res = await client.chat("Explain recursion", {
   temperature: 0.5,
 });
 ```
+
+## Prompt Enhancement
+
+Auto-improve your prompt before it reaches the model. Stateless, free, adds no latency overhead.
+
+```typescript
+// Per-request enhancement
+const response = await client.chat("fix my code", { enhancePrompt: true });
+
+// Standalone — preview the enhanced prompt (free, no API key)
+const result = await client.enhance("tell me about kubernetes");
+if (result.changed) {
+  console.log(`Enhanced: ${result.enhancedPrompt}`);
+}
+```
+
+## Test Mode
+
+Use `testMode` during development and CI to keep routing on default-tier models only — no premium charges, predictable costs.
+
+```typescript
+// Safe for CI pipelines — will never route to premium models
+const response = await client.chat("Write a unit test", { testMode: true });
+```
+
+> `testMode` only affects auto-routing. In manual mode you pick the model explicitly, so it has no effect.
+
+## More Examples
 
 ### Multi-turn conversations
 
@@ -83,17 +152,6 @@ const res = await client.chat([
 const estimate = await client.estimate("Write a blog post about AI");
 console.log(`Model: ${estimate.model}`);
 console.log(`Cost: $${estimate.estimatedCostUsd.toFixed(6)}`);
-console.log(`Confidence: ${estimate.confidence}`);
-```
-
-### Prompt enhancement (free)
-
-```typescript
-const result = await client.enhance("tell me about kubernetes");
-if (result.changed) {
-  console.log(`Enhanced: ${result.enhancedPrompt}`);
-  console.log(`Type: ${result.queryType}`);
-}
 ```
 
 ### List models
@@ -119,7 +177,7 @@ try {
 }
 ```
 
-## OpenAI SDK Compatible
+## Also Works with OpenAI SDK
 
 You can also use RoutePlex with the OpenAI SDK — just change the `baseURL`:
 
@@ -127,7 +185,7 @@ You can also use RoutePlex with the OpenAI SDK — just change the `baseURL`:
 import OpenAI from "openai";
 
 const client = new OpenAI({
-  apiKey: "rp_your_api_key",
+  apiKey: "rp_live_YOUR_KEY",
   baseURL: "https://api.routeplex.com/v1",
 });
 
@@ -139,17 +197,22 @@ const response = await client.chat.completions.create({
 
 ## Ecosystem
 
-| Package | Platform | Description |
-|---------|----------|-------------|
-| [`@routeplex/node`](https://www.npmjs.com/package/@routeplex/node) | npm | Node.js SDK |
-| [`routeplex`](https://pypi.org/project/routeplex/) | PyPI | Python SDK |
+| Package | Platform | Install |
+|---------|----------|---------|
+| [`@routeplex/node`](https://www.npmjs.com/package/@routeplex/node) | npm | `npm install @routeplex/node` |
+| [`routeplex`](https://pypi.org/project/routeplex/) | PyPI | `pip install routeplex` |
 
 ## Links
 
-- [Website](https://routeplex.com)
-- [Documentation](https://routeplex.com/docs)
-- [API Playground](https://routeplex.com/docs/api-reference/playground)
+- [Website](https://routeplex.com?utm_source=github&utm_medium=readme&utm_campaign=node-sdk)
+- [Documentation](https://routeplex.com/docs?utm_source=github&utm_medium=readme&utm_campaign=node-sdk)
+- [API Reference & Playground](https://routeplex.com/docs/api-reference/playground?utm_source=github&utm_medium=readme&utm_campaign=node-sdk)
+- [Pricing](https://routeplex.com/pricing?utm_source=github&utm_medium=readme&utm_campaign=node-sdk)
+- [Changelog](https://routeplex.com/changelog?utm_source=github&utm_medium=readme&utm_campaign=node-sdk)
+- [Blog](https://routeplex.com/blog?utm_source=github&utm_medium=readme&utm_campaign=node-sdk)
+- [Python SDK (GitHub)](https://github.com/routeplex/routeplex-python)
+- [Examples](https://github.com/routeplex/routeplex-examples)
 
 ## License
 
-MIT
+MIT — see [LICENSE](https://github.com/routeplex/routeplex-node/blob/main/LICENSE)

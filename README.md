@@ -36,14 +36,16 @@ const res = await client.chat("Write a sorting algorithm", { strategy: "quality"
 ## Features
 
 - **One-liner chat** — pass a string, get a response
+- **Streaming** — real-time SSE with `chatStream()` in buffered (~100ms) or realtime (~10ms) mode
 - **Prompt-based auto-routing** — RoutePlex analyzes your prompt and picks the best model automatically
-- **Strategy routing** — override with `strategy` when you know what you want
+- **Strategy routing** — override with `strategy` (`cost`, `speed`, `quality`, `balanced`, `auto`)
 - **Manual mode** — pick a specific model with `model`
 - **Prompt enhancement** — auto-improve prompts before sending to the model
 - **Test mode** — safe development and CI testing with default-tier models only
 - **Cost estimation** — estimate costs before sending (free, no API key needed)
+- **Model catalog** — list all 30+ models with pricing, capabilities, and health status
 - **Full TypeScript types** — complete `.d.ts` included
-- **Typed errors** — `AuthenticationError`, `RateLimitError`, etc.
+- **Typed errors** — `AuthenticationError`, `RateLimitError`, `ValidationError`, `ProviderError`, `ContentPolicyError`
 - **Zero dependencies** — uses only `fetch` (Node 18+)
 
 ## Routing Modes

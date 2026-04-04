@@ -119,7 +119,7 @@ class RoutePlex {
    * @param {string|Array} messages - A string (single user message) or array of {role, content} objects.
    * @param {Object} [options]
    * @param {string} [options.model] - Specific model (enables manual mode).
-   * @param {string} [options.strategy] - Routing strategy: "cost", "speed", "quality", "balanced".
+   * @param {string} [options.strategy] - Routing strategy: "cost", "speed", "quality", "balanced", "auto" (prompt-based, default).
    * @param {number} [options.maxOutputTokens=512] - Max output tokens (1-4096).
    * @param {number} [options.temperature] - Sampling temperature (0-2).
    * @param {boolean} [options.enhancePrompt=false] - Auto-enhance the prompt.

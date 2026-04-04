@@ -119,7 +119,7 @@ class RoutePlex {
    * @param {string|Array} messages - A string (single user message) or array of {role, content} objects.
    * @param {Object} [options]
    * @param {string} [options.model] - Specific model (enables manual mode).
-   * @param {string} [options.strategy] - Routing strategy: "cost", "speed", "quality", "balanced", "auto".
+   * @param {string} [options.strategy] - Routing strategy: "cost", "speed", "quality", "balanced".
    * @param {number} [options.maxOutputTokens=512] - Max output tokens (1-4096).
    * @param {number} [options.temperature] - Sampling temperature (0-2).
    * @param {boolean} [options.enhancePrompt=false] - Auto-enhance the prompt.
@@ -182,6 +182,164 @@ class RoutePlex {
   }
 
   /**
+   * Stream a chat completion, yielding events as they arrive.
+   *
+   * @param {string|Array} messages
+   * @param {Object} [options]
+   * @param {string} [options.model]
+   * @param {string} [options.strategy]
+   * @param {number} [options.maxOutputTokens=512]
+   * @param {number} [options.temperature]
+   * @param {boolean} [options.enhancePrompt=false]
+   * @param {boolean} [options.testMode=false]
+   * @param {string} [options.streamMode="buffered"] - "buffered" or "realtime"
+   * @yields {{ type: string, content?: string, modelUsed?: string, usage?: Object }}
+   *
+   * @example
+   *   for await (const event of client.chatStream("Tell me a story")) {
+   *     if (event.type === "delta") process.stdout.write(event.content);
+   *     if (event.type === "done") console.log("\nTokens:", event.usage.totalTokens);
+   *   }
+   */
+  async *chatStream(messages, options = {}) {
+    const msgs = this._normalizeMessages(messages);
+    const {
+      model,
+      strategy,
+      maxOutputTokens = 512,
+      temperature,
+      enhancePrompt = false,
+      testMode = false,
+      streamMode = "buffered",
+    } = options;
+
+    const body = {
+      messages: msgs,
+      max_output_tokens: maxOutputTokens,
+      enhance_prompt: enhancePrompt,
+      test_mode: testMode,
+      stream: true,
+      stream_mode: streamMode,
+    };
+
+    if (model) {
+      body.mode = "manual";
+      body.model = model;
+    } else {
+      body.mode = "routeplex-ai";
+      if (strategy) body.strategy = strategy;
+    }
+
+    if (temperature !== undefined) body.temperature = temperature;
+
+    const url = `${this._baseUrl}/api/v1/chat`;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this._timeout);
+
+    let resp;
+    try {
+      resp = await fetch(url, {
+        method: "POST",
+        headers: this._headers(true),
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } catch (err) {
+      clearTimeout(timer);
+      if (err.name === "AbortError") {
+        throw new RoutePlexError("Request timed out", "timeout", 0);
+      }
+      throw new RoutePlexError(
+        `Connection failed: ${err.message}`,
+        "connection_error",
+        0
+      );
+    }
+    clearTimeout(timer);
+
+    if (!resp.ok) {
+      let data;
+      try {
+        data = await resp.json();
+      } catch {
+        throw new RoutePlexError(
+          `HTTP ${resp.status}: ${resp.statusText}`,
+          "http_error",
+          resp.status
+        );
+      }
+      if (data.success === false && data.error) {
+        raiseForError(resp.status, data);
+      }
+      throw new RoutePlexError(
+        `HTTP ${resp.status}: ${resp.statusText}`,
+        "http_error",
+        resp.status
+      );
+    }
+
+    // Read SSE stream
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        while (buffer.includes("\n")) {
+          const idx = buffer.indexOf("\n");
+          const line = buffer.slice(0, idx).trim();
+          buffer = buffer.slice(idx + 1);
+
+          if (!line || line.startsWith(":")) continue;
+          if (line === "data: [DONE]") return;
+
+          if (line.startsWith("data: ")) {
+            let data;
+            try {
+              data = JSON.parse(line.slice(6));
+            } catch {
+              continue;
+            }
+
+            const eventType = data.type || "";
+
+            if (eventType === "start") {
+              yield { type: "start", raw: data };
+            } else if (eventType === "delta") {
+              yield { type: "delta", content: data.content || "", raw: data };
+            } else if (eventType === "done") {
+              const u = data.usage || {};
+              yield {
+                type: "done",
+                modelUsed: data.model_used || "",
+                provider: data.provider || "",
+                finishReason: data.finish_reason || "stop",
+                latencyMs: data.latency_ms || null,
+                usage: {
+                  inputTokens: u.input_tokens || 0,
+                  outputTokens: u.output_tokens || 0,
+                  totalTokens: u.total_tokens || 0,
+                  costUsd: u.cost_usd || 0,
+                },
+                raw: data,
+              };
+            } else if (eventType === "error") {
+              yield { type: "error", error: data.message || "Unknown error", raw: data };
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+
+  /**
    * Estimate the cost of a chat request (free, no auth needed).
    * @param {string|Array} messages
    * @param {Object} [options]
@@ -236,16 +394,32 @@ class RoutePlex {
    */
   async listModels() {
     const data = await this._get("/api/v1/models");
-    return (data.data || []).map((m) => ({
-      id: m.id || "",
-      displayName: m.display_name || m.id || "",
-      provider: m.provider || "",
-      tier: m.tier || "default",
-      contextWindow: m.context_window || 0,
-      maxOutput: m.max_output || 0,
-      status: m.status || "available",
-      raw: m,
-    }));
+    return (data.data || []).map((m) => {
+      const p = m.pricing || {};
+      const c = m.capabilities || {};
+      return {
+        id: m.id || "",
+        displayName: m.display_name || m.id || "",
+        provider: m.provider || "",
+        tier: m.tier || "default",
+        contextWindow: m.context_window || 0,
+        maxOutputTokens: m.max_output_tokens || 0,
+        health: m.health || "healthy",
+        pricing: {
+          inputPer1k: p.input_per_1k || 0,
+          outputPer1k: p.output_per_1k || 0,
+        },
+        capabilities: {
+          streaming: c.streaming !== undefined ? c.streaming : true,
+          functions: c.functions || false,
+          vision: c.vision || false,
+        },
+        aliases: m.aliases || [],
+        deprecated: m.deprecated || false,
+        deprecationDate: m.deprecation_date || null,
+        raw: m,
+      };
+    });
   }
 
   // -----------------------------------------------------------------------

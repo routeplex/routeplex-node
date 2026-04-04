@@ -39,32 +39,6 @@ const res = await client.chat("Write a sorting algorithm", { strategy: "quality"
 - **Prompt-based auto-routing** — RoutePlex analyzes your prompt and picks the best model automatically
 - **Strategy routing** — override with `strategy` when you know what you want
 - **Manual mode** — pick a specific model with `model`
-- **Cost estimation** — free, no API key needed
-- **Prompt enhancement** — improve prompts before sending
-- **Full TypeScript types** — complete `.d.ts` included
-- **Typed errors** — `AuthenticationError`, `RateLimitError`, etc.
-- **Zero dependencies** — uses only `fetch` (Node 18+)
-
-## Routing Modes
-
-RoutePlex supports three ways to route your requests:
-
-### 1. Auto-routing (default) — analyzes your prompt
-
-When you don't specify a model or strategy, RoutePlex **analyzes your prompt** to determine the best model. A simple question gets a fast, cheap model. A complex reasoning task gets a capable one.
-
-```typescript
-// RoutePlex reads your prompt and picks the optimal model
-const res = await client.chat("What is JavaScript?");           // → fast, cheap model
-const res2 = await client.chat("Prove the Riemann hypothesis"); // → powerful model
-```
-
-## Features
-
-- **One-liner chat** — pass a string, get a response
-- **Prompt-based auto-routing** — RoutePlex analyzes your prompt and picks the best model automatically
-- **Strategy routing** — override with `strategy` when you know what you want
-- **Manual mode** — pick a specific model with `model`
 - **Prompt enhancement** — auto-improve prompts before sending to the model
 - **Test mode** — safe development and CI testing with default-tier models only
 - **Cost estimation** — estimate costs before sending (free, no API key needed)
@@ -132,6 +106,30 @@ const response = await client.chat("Write a unit test", { testMode: true });
 ```
 
 > `testMode` only affects auto-routing. In manual mode you pick the model explicitly, so it has no effect.
+
+## Streaming
+
+Stream responses in real time using `chatStream()`. Supports two modes: `"buffered"` (default, ~100ms chunks for smooth output) and `"realtime"` (~10ms chunks for minimal latency).
+
+```typescript
+// Buffered streaming (default)
+for await (const event of client.chatStream("Explain how streaming works")) {
+  if (event.type === "delta") {
+    process.stdout.write(event.content);
+  } else if (event.type === "done") {
+    console.log(`\nModel: ${event.modelUsed} | Cost: $${event.usage.costUsd.toFixed(6)}`);
+  }
+}
+
+// Realtime streaming — lowest latency
+for await (const event of client.chatStream("Quick answer", { streamMode: "realtime" })) {
+  if (event.type === "delta") {
+    process.stdout.write(event.content);
+  }
+}
+```
+
+Events: `delta` (content chunk), `done` (final stats), `error` (failure).
 
 ## More Examples
 
@@ -206,7 +204,8 @@ const response = await client.chat.completions.create({
 
 - [Website](https://routeplex.com?utm_source=github&utm_medium=readme&utm_campaign=node-sdk)
 - [Documentation](https://routeplex.com/docs?utm_source=github&utm_medium=readme&utm_campaign=node-sdk)
-- [API Reference & Playground](https://routeplex.com/docs/api-reference/playground?utm_source=github&utm_medium=readme&utm_campaign=node-sdk)
+- [API Reference](https://routeplex.com/api-reference?utm_source=github&utm_medium=readme&utm_campaign=node-sdk)
+- [Playground](https://routeplex.com/playground?utm_source=github&utm_medium=readme&utm_campaign=node-sdk)
 - [Pricing](https://routeplex.com/pricing?utm_source=github&utm_medium=readme&utm_campaign=node-sdk)
 - [Changelog](https://routeplex.com/changelog?utm_source=github&utm_medium=readme&utm_campaign=node-sdk)
 - [Blog](https://routeplex.com/blog?utm_source=github&utm_medium=readme&utm_campaign=node-sdk)

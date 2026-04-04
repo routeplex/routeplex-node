@@ -23,7 +23,7 @@ export interface Usage {
 
 export interface ChatOptions {
   model?: string;
-  strategy?: "cost" | "speed" | "quality" | "balanced" | "auto";
+  strategy?: "cost" | "speed" | "quality" | "balanced";
   maxOutputTokens?: number;
   temperature?: number;
   enhancePrompt?: boolean;

@@ -23,12 +23,54 @@ export interface Usage {
 
 export interface ChatOptions {
   model?: string;
-  strategy?: "cost" | "speed" | "quality" | "balanced" | "auto";
+  strategy?: "cost" | "speed" | "quality" | "balanced";
   maxOutputTokens?: number;
   temperature?: number;
   enhancePrompt?: boolean;
   testMode?: boolean;
 }
+
+export interface ChatStreamOptions extends ChatOptions {
+  streamMode?: "buffered" | "realtime";
+}
+
+export interface StreamStartEvent {
+  type: "start";
+  raw: Record<string, any>;
+}
+
+export interface StreamDeltaEvent {
+  type: "delta";
+  content: string;
+  raw: Record<string, any>;
+}
+
+export interface StreamDoneEvent {
+  type: "done";
+  modelUsed: string;
+  provider: string;
+  finishReason: string;
+  latencyMs: number | null;
+  usage: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+    costUsd: number;
+  };
+  raw: Record<string, any>;
+}
+
+export interface StreamErrorEvent {
+  type: "error";
+  error: string;
+  raw: Record<string, any>;
+}
+
+export type StreamEvent =
+  | StreamStartEvent
+  | StreamDeltaEvent
+  | StreamDoneEvent
+  | StreamErrorEvent;
 
 export interface ChatResponse {
   id: string;
@@ -69,6 +111,17 @@ export interface EnhanceResponse {
   raw: Record<string, any>;
 }
 
+export interface ModelPricing {
+  inputPer1k: number;
+  outputPer1k: number;
+}
+
+export interface ModelCapabilities {
+  streaming: boolean;
+  functions: boolean;
+  vision: boolean;
+}
+
 export interface Model {
   id: string;
   displayName: string;
@@ -77,6 +130,11 @@ export interface Model {
   contextWindow: number;
   maxOutputTokens: number;
   health: string;
+  pricing: ModelPricing;
+  capabilities: ModelCapabilities;
+  aliases: string[];
+  deprecated: boolean;
+  deprecationDate: string | null;
   raw: Record<string, any>;
 }
 
@@ -99,6 +157,11 @@ export declare class RoutePlex {
     messages: string | Message[],
     options?: ChatOptions
   ): Promise<ChatResponse>;
+
+  chatStream(
+    messages: string | Message[],
+    options?: ChatStreamOptions
+  ): AsyncGenerator<StreamEvent, void, unknown>;
 
   estimate(
     messages: string | Message[],

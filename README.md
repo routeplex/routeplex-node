@@ -107,6 +107,30 @@ const response = await client.chat("Write a unit test", { testMode: true });
 
 > `testMode` only affects auto-routing. In manual mode you pick the model explicitly, so it has no effect.
 
+## Streaming
+
+Stream responses in real time using `chatStream()`. Supports two modes: `"buffered"` (default, ~100ms chunks for smooth output) and `"realtime"` (~10ms chunks for minimal latency).
+
+```typescript
+// Buffered streaming (default)
+for await (const event of client.chatStream("Explain how streaming works")) {
+  if (event.type === "delta") {
+    process.stdout.write(event.content);
+  } else if (event.type === "done") {
+    console.log(`\nModel: ${event.modelUsed} | Cost: $${event.usage.costUsd.toFixed(6)}`);
+  }
+}
+
+// Realtime streaming — lowest latency
+for await (const event of client.chatStream("Quick answer", { streamMode: "realtime" })) {
+  if (event.type === "delta") {
+    process.stdout.write(event.content);
+  }
+}
+```
+
+Events: `delta` (content chunk), `done` (final stats), `error` (failure).
+
 ## More Examples
 
 ### Multi-turn conversations

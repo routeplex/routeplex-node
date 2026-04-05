@@ -1,6 +1,6 @@
 {
   "name": "@routeplex/node",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Official RoutePlex Node.js SDK - Multi-model AI gateway. Route requests across OpenAI, Anthropic, and Google Gemini through a unified API.",
   "main": "index.js",
   "types": "index.d.ts",
